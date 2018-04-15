@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Colors</string>
+    <string name="random">Random</string>
+    <string name="text">text</string>
+</resources>
