@@ -19,7 +19,6 @@ import com.madrapps.pikolo.listeners.SimpleColorSelectionListener
 import org.jetbrains.anko.*
 
 
-
 class MainActivity : AppCompatActivity() {
 
     private val random = Random()
@@ -33,6 +32,7 @@ class MainActivity : AppCompatActivity() {
                 imageView.background.setColorFilter(color, PorterDuff.Mode.MULTIPLY)
                 val hexColor = String.format("#%06X", 0xFFFFFF and color)
                 colorTextInput.setText(hexColor)
+                colorTextInput.background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP)
                 setStatusBarColor(color)
                 supportActionBar?.setBackgroundDrawable(ColorDrawable(color))
             }
@@ -48,9 +48,15 @@ class MainActivity : AppCompatActivity() {
         colorTextInput.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 val content = colorTextInput.text
-                val nums = content.substring(1)
-                var hex = true
+                val nums: String
+                if (content.isEmpty()) {
+                    colorTextInput.error = "Input value can't be empty"
+                    return
+                } else {
+                    nums = content.substring(1)
+                }
 
+                var hex = true
                 try {
                     parseInt(nums, 16)
                 } catch (e: NumberFormatException) {
@@ -62,8 +68,8 @@ class MainActivity : AppCompatActivity() {
                         else "Input needs to be a valid hex code"
             }
 
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
 
         var count = 0 // No idea why the alert shows twice so this is my quick probably horrible "fix" lmao
@@ -72,10 +78,7 @@ class MainActivity : AppCompatActivity() {
                 if (colorTextInput.error != null) {
                     count++
                     if (count == 1) {
-                        alert("Input needs to be a valid hex code\nFor example: #CC444B") {
-                            title="Invalid hex"
-                            yesButton {  }
-                        }.show()
+                        toast(colorTextInput.error).show()
                     } else {
                         count = 0
                     }
@@ -94,6 +97,7 @@ class MainActivity : AppCompatActivity() {
         imageView.background.setColorFilter(color, PorterDuff.Mode.MULTIPLY)
         colorPicker.setColor(color)
         supportActionBar?.setBackgroundDrawable(ColorDrawable(color))
+        colorTextInput.background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP)
     }
 
     private fun setStatusBarColor(color: Int) {
