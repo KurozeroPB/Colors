@@ -1,5 +1,6 @@
 package xyz.kurozero.colors
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.support.v7.app.AppCompatActivity
 import android.support.v4.graphics.ColorUtils
@@ -10,6 +11,7 @@ import android.view.WindowManager
 import android.view.KeyEvent
 import android.graphics.PorterDuff
 import android.graphics.drawable.ColorDrawable
+import android.icu.math.BigDecimal
 
 import java.util.Random
 import java.lang.Integer.parseInt
@@ -28,9 +30,19 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         colorPicker.setColorSelectionListener(object : SimpleColorSelectionListener() {
+            @SuppressLint("SetTextI18n")
             override fun onColorSelected(color: Int) {
                 imageView.background.setColorFilter(color, PorterDuff.Mode.MULTIPLY)
                 val hexColor = String.format("#%06X", 0xFFFFFF and color)
+                val r = Color.red(color)
+                val g = Color.green(color)
+                val b = Color.blue(color)
+                textViewRGB.text = "RGB: $r, $g, $b"
+
+                val hsl = FloatArray(3)
+                ColorUtils.RGBToHSL(r, g, b, hsl)
+                textViewHSL.text = "HSL: ${round(hsl[0].toDouble())}, ${round(hsl[1].toDouble())}, ${round(hsl[2].toDouble())}"
+
                 colorTextInput.setText(hexColor)
                 colorTextInput.background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP)
                 setStatusBarColor(color)
@@ -39,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         })
 
         randomColorButton.setOnClickListener({
-            val color = ColorUtils.HSLToColor(floatArrayOf(random.nextFloat(), random.nextFloat(), random.nextFloat()))
+            val color = Color.argb(255, random.nextInt(256), random.nextInt(256), random.nextInt(256))
             val hexColor = String.format("#%06X", 0xFFFFFF and color)
             colorTextInput.setText(hexColor)
             setColors(color)
@@ -92,12 +104,21 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    @SuppressLint("SetTextI18n")
     private fun setColors(color: Int) {
         setStatusBarColor(color)
         imageView.background.setColorFilter(color, PorterDuff.Mode.MULTIPLY)
         colorPicker.setColor(color)
         supportActionBar?.setBackgroundDrawable(ColorDrawable(color))
         colorTextInput.background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP)
+        val r = Color.red(color)
+        val g = Color.green(color)
+        val b = Color.blue(color)
+        textViewRGB.text = "RGB: $r, $g, $b"
+
+        val hsl = FloatArray(3)
+        ColorUtils.RGBToHSL(r, g, b, hsl)
+        textViewHSL.text = "HSL: ${round(hsl[0].toDouble())}, ${round(hsl[1].toDouble())}, ${round(hsl[2].toDouble())}"
     }
 
     private fun setStatusBarColor(color: Int) {
@@ -119,5 +140,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun darkenColor(color: Int, factor: Float): Int {
         return Math.max(color - color * factor, 0.0f).toInt()
+    }
+
+    private fun round(num: Double): Double {
+        return BigDecimal(num).setScale(2, BigDecimal.ROUND_HALF_UP).toDouble()
     }
 }

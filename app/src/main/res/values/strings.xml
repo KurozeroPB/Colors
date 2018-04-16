@@ -3,4 +3,6 @@
     <string name="random">Random</string>
     <string name="text">text</string>
     <string name="input_hex_code">Input hex code</string>
+    <string name="rgb">RGB:</string>
+    <string name="hsl">HSL:</string>
 </resources>
