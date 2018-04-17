@@ -10,26 +10,37 @@ import android.text.TextWatcher
 import android.view.WindowManager
 import android.view.KeyEvent
 import android.graphics.PorterDuff
-import android.graphics.drawable.ColorDrawable
 import android.icu.math.BigDecimal
-
 import java.util.Random
 import java.lang.Integer.parseInt
-
+import com.madrapps.pikolo.listeners.OnColorSelectionListener
 import kotlinx.android.synthetic.main.activity_main.*
-import com.madrapps.pikolo.listeners.SimpleColorSelectionListener
-import org.jetbrains.anko.*
+import org.jetbrains.anko.toast
 
-
+/**
+ * Main activity
+ * @since 0.1.0
+ */
 class MainActivity : AppCompatActivity() {
 
     private val random = Random()
 
+    /**
+     * @property [savedInstanceState] The application state?
+     * @since 0.1.0
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        colorPicker.setColorSelectionListener(object : SimpleColorSelectionListener() {
+        randomColorButton.setOnClickListener({
+            val color = Color.argb(255, random.nextInt(256), random.nextInt(256), random.nextInt(256))
+            val hexColor = String.format("#%06X", 0xFFFFFF and color)
+            colorTextInput.setText(hexColor)
+            setColors(color)
+        })
+
+        colorPicker.setColorSelectionListener(object : OnColorSelectionListener {
             @SuppressLint("SetTextI18n")
             override fun onColorSelected(color: Int) {
                 imageView.background.setColorFilter(color, PorterDuff.Mode.MULTIPLY)
@@ -46,15 +57,12 @@ class MainActivity : AppCompatActivity() {
                 colorTextInput.setText(hexColor)
                 colorTextInput.background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP)
                 setStatusBarColor(color)
-                supportActionBar?.setBackgroundDrawable(ColorDrawable(color))
+                toolbar.setBackgroundColor(color)
+                toolbar.setTitleTextColor(getContrastColor(color))
             }
-        })
 
-        randomColorButton.setOnClickListener({
-            val color = Color.argb(255, random.nextInt(256), random.nextInt(256), random.nextInt(256))
-            val hexColor = String.format("#%06X", 0xFFFFFF and color)
-            colorTextInput.setText(hexColor)
-            setColors(color)
+            override fun onColorSelectionStart(color: Int) {}
+            override fun onColorSelectionEnd(color: Int) {}
         })
 
         colorTextInput.addTextChangedListener(object : TextWatcher {
@@ -104,12 +112,18 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    /**
+     * Function to quickly change the color of a bunch of widgets
+     * @property [color] The color to set
+     * @since 0.2.0
+     */
     @SuppressLint("SetTextI18n")
     private fun setColors(color: Int) {
         setStatusBarColor(color)
         imageView.background.setColorFilter(color, PorterDuff.Mode.MULTIPLY)
         colorPicker.setColor(color)
-        supportActionBar?.setBackgroundDrawable(ColorDrawable(color))
+        toolbar.setBackgroundColor(color)
+        toolbar.setTitleTextColor(getContrastColor(color))
         colorTextInput.background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP)
         val r = Color.red(color)
         val g = Color.green(color)
@@ -121,15 +135,13 @@ class MainActivity : AppCompatActivity() {
         textViewHSL.text = "HSL: ${round(hsl[0].toDouble())}, ${round(hsl[1].toDouble())}, ${round(hsl[2].toDouble())}"
     }
 
-    private fun setStatusBarColor(color: Int) {
-        if (color == Color.BLACK && this.window.navigationBarColor == Color.BLACK) {
-            this.window.clearFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        } else {
-            this.window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        }
-        this.window.statusBarColor = darken(color, 0.2f)
-    }
-
+    /**
+     * Darken an argb color value
+     * @property [color] The color to darken
+     * @property [factor] The factor to how much to darken by
+     * @return The darkened color int
+     * @since 0.2.0
+     */
     private fun darken(color: Int, factor: Float): Int {
         val a = Color.alpha(color)
         val r = darkenColor(Color.red(color), factor)
@@ -138,11 +150,49 @@ class MainActivity : AppCompatActivity() {
         return Color.argb(a, r, g, b)
     }
 
+    /**
+     * Darken a specific color value
+     * @property [color] The color to darken
+     * @property [factor] The factor to how much to darken by
+     * @return The darkened color int
+     * @since 0.2.0
+     */
     private fun darkenColor(color: Int, factor: Float): Int {
         return Math.max(color - color * factor, 0.0f).toInt()
     }
 
-    private fun round(num: Double): Double {
+    /**
+     * Sets the status bar color
+     * @property [color] The color to set the status bar as
+     * @since 0.2.0
+     */
+    fun setStatusBarColor(color: Int) {
+        if (color == Color.BLACK && this.window.navigationBarColor == Color.BLACK) {
+            this.window.clearFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        } else {
+            this.window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        }
+        this.window.statusBarColor = darken(color, 0.2f)
+    }
+
+    /**
+     * Rounds a Double to 2 decimals
+     * @property [num] The value to round
+     * @return The rounded value
+     * @since 0.2.1
+     */
+    fun round(num: Double): Double {
         return BigDecimal(num).setScale(2, BigDecimal.ROUND_HALF_UP).toDouble()
+    }
+
+    /**
+     * Get the contrast and returns the appropriate color
+     * @property [color] Color int to get the contrast from
+     * @return Either black or white depending on the contrast
+     * @since 0.2.2
+     */
+    fun getContrastColor(color: Int): Int {
+        val a = 1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255
+        return if (a < 0.5) Color.BLACK else Color.WHITE
     }
 }
