@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity() {
         })
 
         colorTextInput.setOnKeyListener({ view, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_UP) {
                 if (colorTextInput.error != null) {
                     Snackbar.make(view, colorTextInput.error, Snackbar.LENGTH_LONG).setAction("Error", null).show()
                     return@setOnKeyListener true
