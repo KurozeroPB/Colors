@@ -1,21 +1,32 @@
 package xyz.kurozero.colors
 
 import android.annotation.SuppressLint
-import android.graphics.Color
+import android.app.WallpaperManager
 import android.support.v7.app.AppCompatActivity
 import android.support.v4.graphics.ColorUtils
+import android.support.design.widget.Snackbar
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.WindowManager
 import android.view.KeyEvent
-import android.graphics.PorterDuff
 import android.icu.math.BigDecimal
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.graphics.*
+import android.provider.MediaStore
+import android.support.v7.widget.PopupMenu
+import android.widget.Toast
+
+import java.io.IOException
 import java.util.Random
 import java.lang.Integer.parseInt
+
 import com.madrapps.pikolo.listeners.OnColorSelectionListener
 import kotlinx.android.synthetic.main.activity_main.*
-import org.jetbrains.anko.toast
+import org.jetbrains.anko.*
 
 /**
  * Main activity
@@ -32,6 +43,90 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        imageViewOptions.setOnClickListener({ view ->
+            val popupMenu = PopupMenu(this, view)
+            popupMenu.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.menu_select_image -> {
+                        selectImageInAlbum()
+                        true
+                    }
+                    R.id.menu_set_background -> {
+                        if (colorTextInput.error != null) {
+                            Snackbar.make(view, colorTextInput.error, Snackbar.LENGTH_LONG).setAction("Error", null).show()
+                            return@setOnMenuItemClickListener true
+                        } else if (colorTextInput.text.isEmpty()) {
+                            Snackbar.make(view, "Select a color first", Snackbar.LENGTH_LONG).setAction("Error", null).show()
+                            return@setOnMenuItemClickListener true
+                        }
+
+                        val color = Color.parseColor(colorTextInput.text.toString())
+                        val bitmap = getColorImage(1920, 1080, color)
+
+                        val buttons = listOf("Background", "Lockscreen", "Both")
+                        val errorSnack = Snackbar.make(view, "Failed setting background", Snackbar.LENGTH_LONG).setAction("Error", null)
+                        val successSnack = Snackbar.make(view, "Success setting background", Snackbar.LENGTH_LONG).setAction("Error", null)
+                        selector("Which one do you want to set?", buttons, { _, i ->
+                            when (i) {
+                                0 -> {
+                                    try {
+                                        wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_SYSTEM)
+                                        successSnack.show()
+                                    } catch (e: IOException) {
+                                        errorSnack.show()
+                                    }
+                                }
+                                1 -> {
+                                    try {
+                                        wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK)
+                                        successSnack.setText("Success setting lockscreen").show()
+                                    } catch (e: IOException) {
+                                        errorSnack.setText("Failed setting lockscreen").show()
+                                    }
+                                }
+                                2 -> {
+                                    try {
+                                        wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_SYSTEM)
+                                        wallpaperManager.setBitmap(bitmap, null, true, WallpaperManager.FLAG_LOCK)
+                                        successSnack.setText("Success setting background and lockscreen").show()
+                                    } catch (e: IOException) {
+                                        errorSnack.setText("Failed setting background and lockscreen").show()
+                                    }
+                                }
+                                else -> return@selector
+                            }
+                        })
+                        true
+                    }
+                    else -> false
+                }
+            }
+
+            popupMenu.inflate(R.menu.menu_main)
+
+            try {
+                val fieldMPopup = PopupMenu::class.java.getDeclaredField("mPopup")
+                fieldMPopup.isAccessible = true
+                val mPopup = fieldMPopup.get(popupMenu)
+                mPopup.javaClass
+                        .getDeclaredMethod("setForceShowIcon", Boolean::class.java)
+                        .invoke(mPopup, true)
+            } catch (e: Exception) {
+                val errorMessage = if (e.message != null) e.message!! else "Error showing menu icons."
+                Snackbar.make(view, errorMessage, Snackbar.LENGTH_LONG).setAction("Error", null).show()
+            } finally {
+                popupMenu.show()
+            }
+        })
+
+        imageView.setOnLongClickListener({ view ->
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("", colorTextInput.text)
+            clipboard.primaryClip = clip
+            Snackbar.make(view, "Saved ${colorTextInput.text} to clipboard", Snackbar.LENGTH_LONG).setAction("Action", null).show()
+            return@setOnLongClickListener true
+        })
 
         randomColorButton.setOnClickListener({
             val color = Color.argb(255, random.nextInt(256), random.nextInt(256), random.nextInt(256))
@@ -92,16 +187,10 @@ class MainActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
 
-        var count = 0 // No idea why the alert shows twice so this is my quick probably horrible "fix" lmao
-        colorTextInput.setOnKeyListener({ _, keyCode, _ ->
-            if (keyCode == KeyEvent.KEYCODE_ENTER) {
+        colorTextInput.setOnKeyListener({ view, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_UP) {
                 if (colorTextInput.error != null) {
-                    count++
-                    if (count == 1) {
-                        toast(colorTextInput.error).show()
-                    } else {
-                        count = 0
-                    }
+                    Snackbar.make(view, colorTextInput.error, Snackbar.LENGTH_LONG).setAction("Error", null).show()
                     return@setOnKeyListener true
                 }
                 val color = Color.parseColor(colorTextInput.text.toString())
@@ -113,6 +202,50 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
+     * If an image is selected set the colors to the dominant color from that image
+     * @property [requestCode]
+     * @property [resultCode]
+     * @property [intent]
+     * @since 0.3.0
+     */
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
+        super.onActivityResult(requestCode, resultCode, intent)
+        if (resultCode == RESULT_CANCELED) return
+        val contentURI = intent!!.data
+        try {
+            val bitmap = MediaStore.Images.Media.getBitmap(contentResolver, contentURI)
+            val color = getDominantColor(bitmap)
+            val hexColor = String.format("#%06X", 0xFFFFFF and color)
+            colorTextInput.setText(hexColor)
+            setColors(color)
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Toast.makeText(this, "Failed!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * Get the dominant color from an image
+     * @property [bitmap]
+     * @since 0.3.0
+     */
+    private fun getDominantColor(bitmap: Bitmap): Int {
+        val newBitmap = Bitmap.createScaledBitmap(bitmap, 1, 1, true)
+        val color = newBitmap.getPixel(0, 0)
+        newBitmap.recycle()
+        return color
+    }
+
+    /**
+     * Select an image from your gallery
+     * @since 0.3.0
+     */
+    private fun selectImageInAlbum() {
+        val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        startActivityForResult(galleryIntent, 1)
+    }
+
+    /**
      * Function to quickly change the color of a bunch of widgets
      * @property [color] The color to set
      * @since 0.2.0
@@ -121,6 +254,7 @@ class MainActivity : AppCompatActivity() {
     private fun setColors(color: Int) {
         setStatusBarColor(color)
         imageView.background.setColorFilter(color, PorterDuff.Mode.MULTIPLY)
+        imageViewOptions.setColorFilter(getContrastColor(color))
         colorPicker.setColor(color)
         toolbar.setBackgroundColor(color)
         toolbar.setTitleTextColor(getContrastColor(color))
@@ -194,5 +328,22 @@ class MainActivity : AppCompatActivity() {
     fun getContrastColor(color: Int): Int {
         val a = 1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255
         return if (a < 0.5) Color.BLACK else Color.WHITE
+    }
+
+    /**
+     * Create an image bitmap from a color value
+     * @property [width] Image width
+     * @property [height] Image height
+     * @property [color] Color value
+     * @return Image bitmap
+     * @since 0.3.0
+     */
+    private fun getColorImage(width: Int, height: Int, color: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint()
+        paint.color = color
+        canvas.drawRect(0F, 0F, width.toFloat(), height.toFloat(), paint)
+        return bitmap
     }
 }

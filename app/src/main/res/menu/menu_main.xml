@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_select_image"
+        android:title="@string/select_image"
+        android:icon="@drawable/folder_multiple_image" />
+    <item
+        android:id="@+id/menu_set_background"
+        android:title="@string/set_background"
+        android:icon="@drawable/cellphone_android" />
+</menu>
