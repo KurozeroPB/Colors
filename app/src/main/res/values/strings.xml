@@ -5,4 +5,7 @@
     <string name="input_hex_code">Input hex code</string>
     <string name="rgb">RGB:</string>
     <string name="hsl">HSL:</string>
+    <string name="select_image">Select image</string>
+    <string name="set_background">Set background</string>
+    <string name="menu">menu</string>
 </resources>
