@@ -12,7 +12,6 @@ import android.view.WindowManager
 import android.view.KeyEvent
 import android.graphics.PorterDuff
 import android.icu.math.BigDecimal
-import android.support.annotation.ColorInt
 
 import java.util.Random
 import java.lang.Integer.parseInt
@@ -96,17 +95,10 @@ class MainActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
 
-        var count = 0 // No idea why the alert shows twice so this is my quick probably horrible "fix" lmao
-        colorTextInput.setOnKeyListener({ view, keyCode, _ ->
-            if (keyCode == KeyEvent.KEYCODE_ENTER) {
+        colorTextInput.setOnKeyListener({ view, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
                 if (colorTextInput.error != null) {
-                    count++
-                    if (count == 1) {
-                        Snackbar.make(view, colorTextInput.error, Snackbar.LENGTH_LONG)
-                                .setAction("Error", null).show()
-                    } else {
-                        count = 0
-                    }
+                    Snackbar.make(view, colorTextInput.error, Snackbar.LENGTH_LONG).setAction("Error", null).show()
                     return@setOnKeyListener true
                 }
                 val color = Color.parseColor(colorTextInput.text.toString())
