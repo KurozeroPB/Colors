@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.graphics.Color
 import android.support.v7.app.AppCompatActivity
 import android.support.v4.graphics.ColorUtils
+import android.support.design.widget.Snackbar
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -11,11 +12,14 @@ import android.view.WindowManager
 import android.view.KeyEvent
 import android.graphics.PorterDuff
 import android.icu.math.BigDecimal
+import android.support.annotation.ColorInt
+
 import java.util.Random
 import java.lang.Integer.parseInt
+
 import com.madrapps.pikolo.listeners.OnColorSelectionListener
 import kotlinx.android.synthetic.main.activity_main.*
-import org.jetbrains.anko.toast
+// import org.jetbrains.anko.toast
 
 /**
  * Main activity
@@ -93,12 +97,13 @@ class MainActivity : AppCompatActivity() {
         })
 
         var count = 0 // No idea why the alert shows twice so this is my quick probably horrible "fix" lmao
-        colorTextInput.setOnKeyListener({ _, keyCode, _ ->
+        colorTextInput.setOnKeyListener({ view, keyCode, _ ->
             if (keyCode == KeyEvent.KEYCODE_ENTER) {
                 if (colorTextInput.error != null) {
                     count++
                     if (count == 1) {
-                        toast(colorTextInput.error).show()
+                        Snackbar.make(view, colorTextInput.error, Snackbar.LENGTH_LONG)
+                                .setAction("Error", null).show()
                     } else {
                         count = 0
                     }
