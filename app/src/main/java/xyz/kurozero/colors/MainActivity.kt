@@ -206,7 +206,7 @@ class MainActivity : AppCompatActivity() {
      * @property [requestCode]
      * @property [resultCode]
      * @property [intent]
-     * @since 0.2.3
+     * @since 0.3.0
      */
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         super.onActivityResult(requestCode, resultCode, intent)
@@ -227,7 +227,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * Get the dominant color from an image
      * @property [bitmap]
-     * @since 0.2.3
+     * @since 0.3.0
      */
     private fun getDominantColor(bitmap: Bitmap): Int {
         val newBitmap = Bitmap.createScaledBitmap(bitmap, 1, 1, true)
@@ -238,7 +238,7 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * Select an image from your gallery
-     * @since 0.2.3
+     * @since 0.3.0
      */
     private fun selectImageInAlbum() {
         val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
@@ -336,7 +336,7 @@ class MainActivity : AppCompatActivity() {
      * @property [height] Image height
      * @property [color] Color value
      * @return Image bitmap
-     * @since 0.2.3
+     * @since 0.3.0
      */
     private fun getColorImage(width: Int, height: Int, color: Int): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
