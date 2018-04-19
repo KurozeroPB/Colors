@@ -1,8 +1,7 @@
 apply plugin: 'com.android.application'
-
 apply plugin: 'kotlin-android'
-
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
 
 android {
     compileSdkVersion 27
@@ -10,8 +9,8 @@ android {
         applicationId "xyz.kurozero.colors"
         minSdkVersion 24
         targetSdkVersion 27
-        versionCode 3
-        versionName "0.3.0"
+        versionCode 5
+        versionName "0.5.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
@@ -31,6 +30,9 @@ dependencies {
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.github.madrapps:pikolo:1.1.6'
     implementation 'org.jetbrains.anko:anko:0.10.4'
+    implementation 'com.github.zawadz88.materialpopupmenu:material-popup-menu:2.1.0'
+    implementation 'com.jakewharton:butterknife:8.7.0'
+    kapt 'com.jakewharton:butterknife-compiler:8.7.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
