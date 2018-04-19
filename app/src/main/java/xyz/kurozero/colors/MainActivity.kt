@@ -189,7 +189,7 @@ class MainActivity : AppCompatActivity() {
         val contentURI = intent!!.data
         try {
             val bitmap = MediaStore.Images.Media.getBitmap(contentResolver, contentURI)
-            val color = getDominantColor(bitmap)
+            val color = getDominantColor(bitmap, 1)
             val hexColor = String.format("#%06X", 0xFFFFFF and color)
             colorTextInput.setText(hexColor)
             setColors(color)
@@ -204,11 +204,25 @@ class MainActivity : AppCompatActivity() {
      * @property [bitmap]
      * @since 0.3.0
      */
-    private fun getDominantColor(bitmap: Bitmap): Int {
-        val newBitmap = Bitmap.createScaledBitmap(bitmap, 1, 1, true)
-        val color = newBitmap.getPixel(0, 0)
-        newBitmap.recycle()
-        return color
+    private fun getDominantColor(bitmap: Bitmap, pixelSpacing: Int): Int {
+        var r = 0
+        var g = 0
+        var b = 0
+        val height = bitmap.height
+        val width = bitmap.width
+        var n = 0
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        var i = 0
+        while (i < pixels.size) {
+            val color = pixels[i]
+            r += Color.red(color)
+            g += Color.green(color)
+            b += Color.blue(color)
+            n++
+            i += pixelSpacing
+        }
+        return Color.rgb(r / n, g / n, b / n)
     }
 
     /**
