@@ -133,7 +133,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * On menu create
      * @property [menu]
-     * @since 0.3.1
+     * @since 0.5.0
      */
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
@@ -145,7 +145,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * On menu item selected
      * @property [item]
-     * @since 0.3.1
+     * @since 0.5.0
      */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.options_menu) {
